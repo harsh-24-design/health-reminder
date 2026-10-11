@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Health Reminder Application{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm border-0 p-4 rounded-4">
+                <div class="text-center mb-4">
+                    <div class="brand-icon-wrap bg-teal text-white mx-auto mb-3" style="width: 54px; height: 54px; border-radius: 14px;">
+                        <i class="fa-solid fa-user-plus fa-2x"></i>
+                    </div>
+                    <h3 class="fw-bold">Create Account</h3>
+                    <p class="text-muted small">Begin managing your daily health and medicine schedule</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-regular fa-user text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0" id="name" name="name" value="{{ name or '' }}" placeholder="e.g. John Doe" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold small">Email Address <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-regular fa-envelope text-muted"></i></span>
+                            <input type="email" class="form-control border-start-0" id="email" name="email" value="{{ email or '' }}" placeholder="john@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-semibold small">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-phone text-muted"></i></span>
+                            <input type="tel" class="form-control border-start-0" id="phone" name="phone" value="{{ phone or '' }}" placeholder="+1 555-0199">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label fw-semibold small">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="At least 6 characters" minlength="6" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label fw-semibold small">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Repeat password" minlength="6" required>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-4 mt-2">
+                        <input class="form-check-input" type="checkbox" id="terms" required checked>
+                        <label class="form-check-label small text-muted" for="terms">
+                            I agree that this is a routine reminder application and does not replace medical advice.
+                        </label>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-teal py-2 fw-semibold">
+                            <i class="fa-solid fa-user-check me-2"></i> Register Account
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3 text-muted small">
+                    Already registered? <a href="{{ url_for('auth.login') }}" class="text-teal fw-semibold text-decoration-none">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

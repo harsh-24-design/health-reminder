@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Health Reminder Application{% endblock %}</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-teal sticky-top shadow-sm">
+        <div class="container-fluid px-lg-4">
+            <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="{{ url_for('dashboard.index') if logged_in else url_for('auth.login') }}">
+                <div class="brand-icon-wrap me-2 text-white">
+                    <i class="fa-solid fa-heart-pulse fa-lg"></i>
+                </div>
+                <span>Health<span class="text-mint">Pulse</span></span>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                {% if logged_in %}
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-medium">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}">
+                            <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'reminders' in request.endpoint %}active{% endif %}" href="{{ url_for('reminders.index') }}">
+                            <i class="fa-solid fa-bell me-1"></i> Reminders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'appointments' in request.endpoint %}active{% endif %}" href="{{ url_for('appointments.index') }}">
+                            <i class="fa-solid fa-calendar-check me-1"></i> Appointments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'vitals' in request.endpoint %}active{% endif %}" href="{{ url_for('vitals.index') }}">
+                            <i class="fa-solid fa-notes-medical me-1"></i> Health Vitals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'history' in request.endpoint %}active{% endif %}" href="{{ url_for('history.index') }}">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i> History
+                        </a>
+                    </li>
+                    {% if current_user_role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link text-warning fw-semibold {% if 'admin' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.index') }}">
+                            <i class="fa-solid fa-shield-halved me-1"></i> Admin Panel
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notification Bell Dropdown -->
+                    <div class="dropdown" id="notificationDropdownContainer">
+                        <button class="btn btn-outline-light position-relative rounded-pill px-3 py-1 btn-sm" type="button" id="notifDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                            <i class="fa-regular fa-bell"></i>
+                            <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                0
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg p-2 notif-menu" aria-labelledby="notifDropdownBtn" style="width: 320px; max-height: 380px; overflow-y: auto;">
+                            <li class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
+                                <span class="fw-bold small text-muted">Notifications</span>
+                                <button id="markAllReadBtn" class="btn btn-link btn-sm p-0 text-decoration-none small text-teal">Mark read</button>
+                            </li>
+                            <div id="notifList" class="py-2">
+                                <li class="text-center text-muted small py-3">No unread notifications</li>
+                            </div>
+                        </ul>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-user-pill dropdown-toggle d-flex align-items-center text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar-circle me-2">{{ current_user_name[:1] | upper }}</div>
+                            <span class="d-none d-sm-inline fw-semibold">{{ current_user_name }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li class="px-3 py-1 text-muted small">Role: <span class="badge bg-secondary">{{ current_user_role | capitalize }}</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                    <i class="fa-regular fa-user me-2 text-teal"></i> My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {% else %}
+                <div class="d-flex gap-2 ms-auto">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-sm px-3">Log In</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-mint text-dark fw-semibold btn-sm px-3">Sign Up Free</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Desktop Notification Prompt Banner (if not yet permitted) -->
+    {% if logged_in %}
+    <div id="desktopNotifBanner" class="alert alert-info border-0 rounded-0 mb-0 py-2 d-none" role="alert">
+        <div class="container d-flex justify-content-between align-items-center small">
+            <span><i class="fa-solid fa-bell me-2"></i> Enable desktop notifications to receive timely popups for medicines and water even when tab is in background.</span>
+            <button id="enableNotifBtn" class="btn btn-sm btn-teal text-white px-3 ms-2">Enable Alerts</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Flash Messages Container -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-3 d-flex align-items-center" role="alert">
+                        <i class="fa-solid {% if category == 'success' %}fa-circle-check text-success{% elif category == 'danger' %}fa-triangle-exclamation text-danger{% elif category == 'warning' %}fa-circle-exclamation text-warning{% else %}fa-circle-info text-info{% endif %} fa-lg me-2"></i>
+                        <div>{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 pb-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Toast Notification Container for Real-time alerts -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index: 1090;"></div>
+
+    <!-- Medical Disclaimer Footer -->
+    <footer class="footer bg-white border-top text-muted py-3 mt-auto">
+        <div class="container text-center small">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-md-start mb-2 mb-md-0">
+                    <span class="fw-semibold text-teal"><i class="fa-solid fa-heart-pulse me-1"></i> Health Reminder Application</span> &copy; 2026. All rights reserved.
+                </div>
+                <div class="col-md-6 text-md-end text-secondary" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-shield-heart me-1"></i> Not a substitute for professional medical diagnosis or treatment.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App UI Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Live Notifications Script -->
+    {% if logged_in %}
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    {% endif %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

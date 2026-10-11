@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Reminders - Health Reminder Application{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">
+                <i class="fa-solid fa-bell me-2 text-teal"></i> Health Reminders
+            </h2>
+            <p class="text-muted mb-0">Create, customize, and manage all your recurring and one-time reminders</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{{ url_for('reminders.create') }}" class="btn btn-teal px-3 py-2 fw-semibold">
+                <i class="fa-solid fa-plus me-1"></i> Add New Reminder
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter and Search Toolbar -->
+    <div class="card shadow-sm border-0 mb-4 p-3 bg-white">
+        <form method="GET" action="{{ url_for('reminders.index') }}" class="row g-2 align-items-center">
+            <!-- Search Text -->
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Search by title, medicine..." value="{{ search_query }}">
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="col-sm-6 col-md-2">
+                <select name="category" class="form-select" onchange="this.form.submit()">
+                    <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-sm-6 col-md-2">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="All" {% if selected_status == 'All' %}selected{% endif %}>All Statuses</option>
+                    <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Completed" {% if selected_status == 'Completed' %}selected{% endif %}>Completed</option>
+                    <option value="Missed" {% if selected_status == 'Missed' %}selected{% endif %}>Missed</option>
+                </select>
+            </div>
+
+            <!-- Date Filter -->
+            <div class="col-sm-6 col-md-2">
+                <select name="date" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {% if selected_date == 'all' %}selected{% endif %}>All Dates</option>
+                    <option value="today" {% if selected_date == 'today' %}selected{% endif %}>Today</option>
+                    <option value="upcoming" {% if selected_date == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="past" {% if selected_date == 'past' %}selected{% endif %}>Past</option>
+                </select>
+            </div>
+
+            <!-- Submit / Reset Buttons -->
+            <div class="col-sm-6 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-teal w-100 fw-semibold">Filter</button>
+                <a href="{{ url_for('reminders.index') }}" class="btn btn-outline-secondary" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reminders Table / Cards -->
+    <div class="card shadow-sm border-0 bg-white">
+        <div class="card-body p-0">
+            {% if reminders %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4">Title & Details</th>
+                            <th>Category</th>
+                            <th>Date & Time</th>
+                            <th>Frequency</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reminders %}
+                        <tr class="priority-{{ r.priority|lower }} {% if r.status == 'Completed' %}table-light opacity-75{% endif %}">
+                            <td class="ps-4">
+                                <div class="fw-bold fs-6 {% if r.status == 'Completed' %}text-decoration-line-through text-muted{% endif %}">
+                                    {{ r.title }}
+                                </div>
+                                <div class="text-muted small">
+                                    {% if r.category == 'Medicine' %}
+                                        {% if r.medicine_name %}<strong>{{ r.medicine_name }}</strong> &bull; {% endif %}
+                                        {% if r.dosage %}Dosage: <span class="badge bg-light text-dark border">{{ r.dosage }}</span>{% endif %}
+                                    {% elif r.category == 'Water' and r.target_volume %}
+                                        Amount: <span class="badge bg-light text-dark border">{{ r.target_volume }}</span>
+                                    {% elif r.category == 'Exercise' and r.exercise_type %}
+                                        Type: <span class="badge bg-light text-dark border">{{ r.exercise_type }} ({{ r.duration_mins or 30 }}m)</span>
+                                    {% elif r.category == 'Health Check' and r.metric_type %}
+                                        Target: <span class="badge bg-light text-dark border">{{ r.metric_type }}</span>
+                                    {% endif %}
+                                    {% if r.description %}
+                                        <div class="fst-italic text-secondary">{{ r.description }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-cat-{{ r.category|lower|replace(' ', '-') }} px-2 py-1">
+                                    {{ r.category }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold"><i class="fa-regular fa-calendar me-1 text-muted"></i> {{ r.date }}</div>
+                                <div class="small text-muted"><i class="fa-regular fa-clock me-1 text-muted"></i> {{ r.time }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border">
+                                    <i class="fa-solid fa-repeat me-1"></i> {{ r.frequency }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if r.priority == 'High' %}bg-danger{% elif r.priority == 'Medium' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ r.priority }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-status-{{ r.status|lower }} px-2 py-1">
+                                    {{ r.status }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-inline-flex gap-1">
+                                    {% if r.status != 'Completed' %}
+                                    <form action="{{ url_for('reminders.complete', reminder_id=r.reminder_id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success px-2 py-1" title="Mark Done">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('reminders.snooze', reminder_id=r.reminder_id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="minutes" value="10">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary px-2 py-1" title="Snooze 10m">
+                                            <i class="fa-solid fa-clock"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <a href="{{ url_for('reminders.edit', reminder_id=r.reminder_id) }}" class="btn btn-sm btn-outline-primary px-2 py-1" title="Edit">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <form action="{{ url_for('reminders.delete', reminder_id=r.reminder_id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger px-2 py-1 btn-confirm-delete" title="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-regular fa-bell-slash fa-3x mb-3 text-secondary"></i>
+                <h5>No Reminders Found</h5>
+                <p class="small">Try adjusting your filters or create a new health reminder.</p>
+                <a href="{{ url_for('reminders.create') }}" class="btn btn-teal btn-sm px-3 mt-1">
+                    <i class="fa-solid fa-plus me-1"></i> Add Reminder
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Health Reminder Application{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+
+    <!-- Dashboard Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="fw-bold mb-1">
+                Hello, <span class="text-teal">{{ current_user_name }}</span>! 👋
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fa-regular fa-calendar-days me-1 text-teal"></i> {{ current_date_display }} &bull; Health Routine Overview
+            </p>
+        </div>
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+            <a href="{{ url_for('reminders.create') }}" class="btn btn-teal fw-semibold">
+                <i class="fa-solid fa-plus me-1"></i> Add Reminder
+            </a>
+            <a href="{{ url_for('appointments.index') }}" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-user-doctor me-1"></i> Doctor Visit
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Key Stat Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Today Total -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card bg-white p-3 h-100 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-light text-teal me-3">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Today's Total</div>
+                        <div class="fs-3 fw-bold">{{ total_today }}</div>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Scheduled health activities</div>
+            </div>
+        </div>
+
+        <!-- Completed -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card bg-white p-3 h-100 shadow-sm border-start border-success border-4">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success-subtle text-success me-3">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="text-muted small fw-semibold text-uppercase">Completed</div>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <span class="fs-3 fw-bold text-success">{{ completed_today }}</span>
+                            <span class="badge bg-success-subtle text-success small">{{ adherence_pct }}% adherence</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ adherence_pct }}%;" aria-valuenow="{{ adherence_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card bg-white p-3 h-100 shadow-sm border-start border-warning border-4">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning-subtle text-warning-emphasis me-3">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Pending</div>
+                        <div class="fs-3 fw-bold text-warning-emphasis">{{ pending_today }}</div>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Awaiting completion today</div>
+            </div>
+        </div>
+
+        <!-- Missed -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card bg-white p-3 h-100 shadow-sm border-start border-danger border-4">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-danger-subtle text-danger me-3">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Overdue / Missed</div>
+                        <div class="fs-3 fw-bold text-danger">{{ missed_today }}</div>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">Past due activities</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="row g-4">
+        <!-- Left Column: Today's Schedule -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-teal">
+                        <i class="fa-solid fa-calendar-day me-2"></i> Today's Schedule
+                    </h5>
+                    <a href="{{ url_for('reminders.index') }}" class="btn btn-sm btn-outline-teal text-decoration-none">
+                        View All Reminders <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if today_reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-muted small text-uppercase">
+                                <tr>
+                                    <th class="ps-4">Time</th>
+                                    <th>Activity & Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in today_reminders %}
+                                <tr class="{% if r.status == 'Completed' %}table-light opacity-75{% endif %}">
+                                    <td class="ps-4 fw-bold">
+                                        <i class="fa-regular fa-clock me-1 text-teal"></i> {{ r.time }}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <div class="fw-semibold {% if r.status == 'Completed' %}text-decoration-line-through text-muted{% endif %}">
+                                                    {{ r.title }}
+                                                </div>
+                                                <div class="small text-muted">
+                                                    <span class="badge badge-cat-{{ r.category|lower|replace(' ', '-') }} me-1">
+                                                        {{ r.category }}
+                                                    </span>
+                                                    {% if r.category == 'Medicine' and r.dosage %}
+                                                        <span class="text-secondary"><i class="fa-solid fa-pills me-1"></i>{{ r.dosage }}</span>
+                                                    {% elif r.category == 'Water' and r.target_volume %}
+                                                        <span class="text-secondary"><i class="fa-solid fa-droplet me-1"></i>{{ r.target_volume }}</span>
+                                                    {% elif r.category == 'Exercise' and r.exercise_type %}
+                                                        <span class="text-secondary"><i class="fa-solid fa-person-running me-1"></i>{{ r.exercise_type }} ({{ r.duration_mins or 30 }}m)</span>
+                                                    {% elif r.description %}
+                                                        <span class="text-secondary">{{ r.description }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if r.priority == 'High' %}bg-danger{% elif r.priority == 'Medium' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                            {{ r.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-status-{{ r.status|lower }} px-2 py-1">
+                                            {{ r.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        {% if r.status != 'Completed' %}
+                                        <form action="{{ url_for('reminders.complete', reminder_id=r.reminder_id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success px-2 py-1" title="Mark Completed">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('reminders.snooze', reminder_id=r.reminder_id) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="minutes" value="10">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary px-2 py-1" title="Snooze 10 mins">
+                                                <i class="fa-solid fa-clock"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        <a href="{{ url_for('reminders.edit', reminder_id=r.reminder_id) }}" class="btn btn-sm btn-outline-primary px-2 py-1" title="Edit">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-regular fa-calendar-check fa-3x mb-3 text-teal"></i>
+                        <h5>No Reminders Scheduled for Today!</h5>
+                        <p class="small">Stay on top of your medications, hydration, and exercise.</p>
+                        <a href="{{ url_for('reminders.create') }}" class="btn btn-teal btn-sm px-3 mt-1">
+                            <i class="fa-solid fa-plus me-1"></i> Create Reminder
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Activities Section -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-forward me-2 text-teal"></i> Upcoming in Next Days
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    {% if upcoming_reminders %}
+                    <div class="list-group list-group-flush">
+                        {% for item in upcoming_reminders %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                            <div>
+                                <span class="badge badge-cat-{{ item.category|lower|replace(' ', '-') }} me-2">{{ item.category }}</span>
+                                <span class="fw-semibold">{{ item.title }}</span>
+                                <div class="small text-muted ms-1">
+                                    <i class="fa-regular fa-calendar me-1"></i> {{ item.date }} at {{ item.time }}
+                                    {% if item.frequency != 'Once' %}
+                                        &bull; <i class="fa-solid fa-repeat me-1"></i> {{ item.frequency }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-dark border">{{ item.priority }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-muted small text-center py-3">No further upcoming reminders scheduled.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Water Tracker & Vitals & Appointments -->
+        <div class="col-lg-4">
+
+            <!-- Hydration / Water Intake Widget -->
+            <div class="card shadow-sm border-0 mb-4 bg-white">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0 text-teal">
+                            <i class="fa-solid fa-bottle-water me-2 text-info"></i> Daily Hydration
+                        </h6>
+                        <span class="small fw-semibold text-muted">{{ water_today }} / {{ water_goal }} ml</span>
+                    </div>
+
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ water_pct }}%;" aria-valuenow="{{ water_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <form action="{{ url_for('dashboard.quick_water') }}" method="POST" class="flex-grow-1">
+                            <input type="hidden" name="amount" value="250">
+                            <button type="submit" class="btn btn-outline-info w-100 btn-sm fw-semibold">
+                                <i class="fa-solid fa-plus me-1"></i> +250 ml (Glass)
+                            </button>
+                        </form>
+                        <form action="{{ url_for('dashboard.quick_water') }}" method="POST" class="flex-grow-1">
+                            <input type="hidden" name="amount" value="500">
+                            <button type="submit" class="btn btn-outline-primary w-100 btn-sm fw-semibold">
+                                <i class="fa-solid fa-plus me-1"></i> +500 ml (Bottle)
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Vitals Quick Card -->
+            <div class="card shadow-sm border-0 mb-4 bg-white">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-teal">
+                        <i class="fa-solid fa-heart-pulse me-2 text-danger"></i> Latest Vitals
+                    </h6>
+                    <a href="{{ url_for('vitals.index') }}" class="small text-teal text-decoration-none fw-semibold">Log & View</a>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <div class="small text-muted">Blood Pressure</div>
+                                {% if vitals['Blood Pressure'] %}
+                                    <div class="fw-bold fs-6 text-dark">
+                                        {{ vitals['Blood Pressure']['value_primary'] | int }}/{{ vitals['Blood Pressure']['value_secondary'] | int }} <span class="small text-muted">mmHg</span>
+                                    </div>
+                                {% else %}
+                                    <div class="small text-muted">Not recorded</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <div class="small text-muted">Blood Sugar</div>
+                                {% if vitals['Blood Sugar'] %}
+                                    <div class="fw-bold fs-6 text-dark">
+                                        {{ vitals['Blood Sugar']['value_primary'] | int }} <span class="small text-muted">mg/dL</span>
+                                    </div>
+                                {% else %}
+                                    <div class="small text-muted">Not recorded</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <div class="small text-muted">Weight</div>
+                                {% if vitals['Weight'] %}
+                                    <div class="fw-bold fs-6 text-dark">
+                                        {{ vitals['Weight']['value_primary'] }} <span class="small text-muted">kg</span>
+                                    </div>
+                                {% else %}
+                                    <div class="small text-muted">Not recorded</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 border rounded-3 bg-light">
+                                <div class="small text-muted">Heart Rate</div>
+                                {% if vitals['Heart Rate'] %}
+                                    <div class="fw-bold fs-6 text-dark">
+                                        {{ vitals['Heart Rate']['value_primary'] | int }} <span class="small text-muted">bpm</span>
+                                    </div>
+                                {% else %}
+                                    <div class="small text-muted">Not recorded</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor Appointments Widget -->
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-teal">
+                        <i class="fa-solid fa-user-doctor me-2 text-warning"></i> Doctor Visits
+                    </h6>
+                    <a href="{{ url_for('appointments.index') }}" class="small text-teal text-decoration-none fw-semibold">Manage</a>
+                </div>
+                <div class="card-body p-3">
+                    {% if upcoming_appointments %}
+                        {% for apt in upcoming_appointments %}
+                        <div class="border-bottom pb-2 mb-2">
+                            <div class="fw-semibold text-dark">{{ apt.doctor_name }}</div>
+                            <div class="small text-muted">{{ apt.specialization }} &bull; {{ apt.hospital }}</div>
+                            <div class="small text-teal fw-semibold mt-1">
+                                <i class="fa-regular fa-calendar-check me-1"></i> {{ apt.date }} at {{ apt.time }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted small py-3">
+                            No upcoming doctor appointments scheduled.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

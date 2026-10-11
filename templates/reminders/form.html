@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Reminder - Health Reminder Application{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 p-4 rounded-4 bg-white">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="brand-icon-wrap bg-teal text-white me-3" style="width: 48px; height: 48px;">
+                        <i class="fa-solid {% if action == 'Create' %}fa-plus{% else %}fa-pen-to-square{% endif %} fa-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ action }} Health Reminder</h4>
+                        <div class="text-muted small">Configure activity timing, frequency, and custom dosage/details</div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <!-- Title & Category -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label for="title" class="form-label fw-semibold small">Reminder Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ reminder.title or '' }}" placeholder="e.g. Morning Blood Pressure or Metformin" required autofocus>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="categorySelect" class="form-label fw-semibold small">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="categorySelect" name="category" required>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if reminder.category == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Category Specific Fields Container -->
+                    <div class="p-3 bg-light rounded-3 mb-3 border">
+
+                        <!-- Medicine Fields -->
+                        <div id="medicineFields" style="display: none;">
+                            <h6 class="fw-bold text-teal small mb-2"><i class="fa-solid fa-pills me-1"></i> Medicine Details</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Medicine Name</label>
+                                    <input type="text" class="form-control form-control-sm" name="medicine_name" value="{{ reminder.medicine_name or '' }}" placeholder="e.g. Atorvastatin">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Dosage / Instructions</label>
+                                    <input type="text" class="form-control form-control-sm" name="dosage" value="{{ reminder.dosage or '' }}" placeholder="e.g. 10mg after dinner">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Water Fields -->
+                        <div id="waterFields" style="display: none;">
+                            <h6 class="fw-bold text-teal small mb-2"><i class="fa-solid fa-bottle-water me-1"></i> Hydration Target</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Target Volume</label>
+                                    <input type="text" class="form-control form-control-sm" name="target_volume" value="{{ reminder.target_volume or '250 ml' }}" placeholder="e.g. 250 ml, 500 ml">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise Fields -->
+                        <div id="exerciseFields" style="display: none;">
+                            <h6 class="fw-bold text-teal small mb-2"><i class="fa-solid fa-person-running me-1"></i> Exercise Details</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Exercise Type</label>
+                                    <input type="text" class="form-control form-control-sm" name="exercise_type" value="{{ reminder.exercise_type or '' }}" placeholder="Walking, Yoga, Gym, Running">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Target Duration (Minutes)</label>
+                                    <input type="number" class="form-control form-control-sm" name="duration_mins" value="{{ reminder.duration_mins or 30 }}" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Health Check Fields -->
+                        <div id="healthCheckFields" style="display: none;">
+                            <h6 class="fw-bold text-teal small mb-2"><i class="fa-solid fa-notes-medical me-1"></i> Health Measurement</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Metric to Check</label>
+                                    <select class="form-select form-select-sm" name="metric_type">
+                                        <option value="Blood Pressure" {% if reminder.metric_type == 'Blood Pressure' %}selected{% endif %}>Blood Pressure</option>
+                                        <option value="Blood Sugar" {% if reminder.metric_type == 'Blood Sugar' %}selected{% endif %}>Blood Sugar</option>
+                                        <option value="Weight" {% if reminder.metric_type == 'Weight' %}selected{% endif %}>Weight</option>
+                                        <option value="Heart Rate" {% if reminder.metric_type == 'Heart Rate' %}selected{% endif %}>Heart Rate</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="date" class="form-label fw-semibold small">Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ reminder.date or today_str }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="time" class="form-label fw-semibold small">Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="time" name="time" value="{{ reminder.time or '09:00' }}" required>
+                        </div>
+                    </div>
+
+                    <!-- Frequency & Priority -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="frequency" class="form-label fw-semibold small">Repeat Frequency</label>
+                            <select class="form-select" id="frequency" name="frequency">
+                                {% for freq in frequencies %}
+                                    <option value="{{ freq }}" {% if reminder.frequency == freq %}selected{% endif %}>{{ freq }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small">Daily, weekly, or hourly recurring reminders automatically reschedule upon completion.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="priority" class="form-label fw-semibold small">Priority Level</label>
+                            <select class="form-select" id="priority" name="priority">
+                                {% for p in priorities %}
+                                    <option value="{{ p }}" {% if reminder.priority == p %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    {% if action == 'Edit' %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label fw-semibold small">Current Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="Pending" {% if reminder.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Completed" {% if reminder.status == 'Completed' %}selected{% endif %}>Completed</option>
+                            <option value="Missed" {% if reminder.status == 'Missed' %}selected{% endif %}>Missed</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Description / Instructions -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-semibold small">Notes / Instructions</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Additional details, e.g. take with a glass of warm water...">{{ reminder.description or '' }}</textarea>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('reminders.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-teal px-4 fw-semibold">
+                            <i class="fa-solid fa-check me-1"></i> Save Reminder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
